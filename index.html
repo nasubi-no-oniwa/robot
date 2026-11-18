@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5RB6XMN0QR"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-5RB6XMN0QR');
+</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>私はロボットではありません</title>
+<meta name="description" content="「バイクのタイルをすべて選択してください」。1問10秒。正解するほどマス目が細かくなり、物は小さくなる。あなたは何問、人間でいられる？">
+<meta property="og:title" content="私はロボットではありません">
+<meta property="og:description" content="「バイクのタイルをすべて選択してください」。1問10秒。正解するほどマス目が細かくなる。あなたは何問、人間でいられる？">
+<meta property="og:image" content="https://nasubi-no-oniwa.github.io/robot/ogp.png">
+<meta property="og:url" content="https://nasubi-no-oniwa.github.io/robot/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="icon.png">
+<style>
+:root{--ink:#221a2e;--pur:#553a86;--pur2:#6d4fa6;--paper:#f4f1ea;--line:#d9d3c6;--sub:#7d7689;--ok:#12a36a;--ng:#d8362f;--yel:#f2c230}
+[hidden]{display:none!important}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#e9e5dc;color:var(--ink);font-family:-apple-system,"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic UI",system-ui,sans-serif;overscroll-behavior:none}
+body{background:#e9e5dc radial-gradient(circle at 1px 1px,#d8d2c4 1px,transparent 1.5px) 0 0/14px 14px}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+#app{position:fixed;inset:0;max-width:480px;margin:0 auto;display:flex;flex-direction:column;justify-content:center;padding:calc(env(safe-area-inset-top,0px) + 8px) 8px calc(env(safe-area-inset-bottom,0px) + 8px)}
+/* ゲーム画面 */
+#game{background:#fff;border:1px solid var(--line);border-radius:6px;box-shadow:0 10px 30px #2a1f3a30;padding:7px;display:flex;flex-direction:column;gap:7px;user-select:none;-webkit-user-select:none}
+#hd{background:var(--pur);color:#fff;border-radius:3px;padding:12px 14px 13px;display:flex;align-items:flex-end;gap:10px;min-height:96px}
+#hd .l{flex:1;min-width:0}
+#hd small{display:block;font-size:13px;opacity:.92;line-height:1.3}
+#hd b{display:block;font-size:27px;font-weight:900;line-height:1.2;margin:2px 0 3px;letter-spacing:.01em;word-break:keep-all;overflow-wrap:anywhere}
+#hd .r{flex:none;text-align:right;line-height:1}
+#hd .r small{font-size:10.5px;letter-spacing:.12em;opacity:.8;margin-bottom:3px}
+#hd .r span{font-size:34px;font-weight:900;font-variant-numeric:tabular-nums}
+#tbar{height:7px;background:#ece8df;border-radius:4px;overflow:hidden}
+#tfill{display:block;height:100%;width:100%;background:var(--pur2);transform-origin:0 50%;border-radius:4px}
+#tbar.hot #tfill{background:var(--ng)}
+#board{position:relative;width:100%;aspect-ratio:1;background:#fff;overflow:hidden;touch-action:none}
+#grid{position:absolute;inset:0;display:grid;gap:3px;background:#fff}
+.tl{position:relative;background-repeat:no-repeat;background-color:#ddd;overflow:hidden;will-change:transform;transition:transform .08s}
+.tl.on{transform:scale(.84)}
+.tl.on:after{content:"";position:absolute;left:3px;top:3px;width:22px;height:22px;border-radius:50%;background:var(--pur) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5' fill='none' stroke='%23fff' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/15px no-repeat;box-shadow:0 0 0 2px #fff}
+#grid.n7 .tl.on:after,#grid.n8 .tl.on:after{width:16px;height:16px;left:2px;top:2px;background-size:11px;box-shadow:0 0 0 1.5px #fff}
+.tl.ans{outline:4px solid var(--ok);outline-offset:-4px;animation:ans .7s ease-in-out infinite alternate;z-index:2}
+.tl.bad{outline:4px solid var(--ng);outline-offset:-4px}
+.tl.dimx{filter:grayscale(.7) brightness(.62)}
+@keyframes ans{to{outline-color:#7dffc4}}
+#fxc{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;image-rendering:pixelated;z-index:5}
+#msg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#fffffff2;border:2px solid var(--ink);border-radius:4px;padding:10px 16px;font-weight:900;font-size:18px;text-align:center;white-space:nowrap;z-index:6;pointer-events:none;box-shadow:4px 4px 0 #0003}
+#msg small{display:block;font-size:12.5px;font-weight:700;color:var(--sub);margin-top:3px;white-space:normal}
+#lvl{position:absolute;right:8px;top:8px;background:var(--yel);color:var(--ink);font-weight:900;font-size:13px;padding:4px 9px;border-radius:3px;z-index:6;pointer-events:none;box-shadow:2px 2px 0 #0004}
+#load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#f1eee7;z-index:4}
+.spin{width:34px;height:34px;border:4px solid #d9d3c6;border-top-color:var(--pur);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+#ft{display:flex;align-items:center;gap:10px;border-top:1px solid var(--line);padding-top:7px}
+#ft .ic{display:flex;gap:4px;color:var(--sub)}
+#ft .ic button{width:38px;height:38px;border-radius:50%;font-size:18px}
+#ft .ic button:active{background:#0000000f}
+#tsec{flex:1;font-variant-numeric:tabular-nums;font-weight:800;font-size:15px;color:var(--sub);font-family:ui-monospace,Menlo,monospace}
+#tsec.hot{color:var(--ng)}
+#okBtn{min-width:128px;height:46px;border-radius:3px;background:var(--pur);color:#fff;font-weight:900;font-size:16px;letter-spacing:.06em;box-shadow:0 3px 0 #3a2760}
+#okBtn:active{transform:translateY(2px);box-shadow:0 1px 0 #3a2760}
+#okBtn.skip{background:#fff;color:var(--pur);box-shadow:inset 0 0 0 2px var(--pur),0 3px 0 #cfc7de}
+#game.shake{animation:shake .32s}
+@keyframes shake{20%{transform:translateX(-7px)}45%{transform:translateX(6px)}70%{transform:translateX(-4px)}90%{transform:translateX(2px)}}
+/* パネル（タイトル・結果・ランキング） */
+.panel{position:fixed;inset:0;z-index:20;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;justify-content:center;align-items:flex-start;padding:calc(env(safe-area-inset-top,0px) + 14px) 10px calc(env(safe-area-inset-bottom,0px) + 22px);background:#e9e5dc radial-gradient(circle at 1px 1px,#d8d2c4 1px,transparent 1.5px) 0 0/14px 14px}
+.card{width:100%;max-width:440px;background:#fff;border:1px solid var(--line);border-radius:6px;box-shadow:0 10px 30px #2a1f3a26;padding:20px 16px 20px;text-align:center;margin:auto 0}
+.brand{display:flex;align-items:center;justify-content:center;gap:8px;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.2em;color:var(--sub);margin-bottom:14px}
+.brand i{width:20px;height:20px;border-radius:50% 50% 50% 8%;background:var(--pur);display:inline-block;transform:rotate(-45deg);position:relative}
+.brand i:after{content:"";position:absolute;right:-3px;top:-3px;width:9px;height:6px;border-radius:6px 6px 0 6px;background:#3d8a3d}
+h1{font-size:clamp(19px,6.1vw,25px);font-weight:900;margin:0 0 8px;line-height:1.3;white-space:nowrap}
+.lead{font-size:13.5px;line-height:1.8;color:#4a4356;margin:0 0 16px;text-wrap:balance;word-break:keep-all;overflow-wrap:anywhere}
+.lead b{color:var(--pur)}
+#chk{display:flex;align-items:center;gap:14px;width:100%;border:2px solid var(--ink);border-radius:4px;background:#fbfaf6;padding:17px 16px;text-align:left;box-shadow:4px 4px 0 #2a1f3a26;margin-bottom:12px;position:relative}
+#chk:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #2a1f3a26}
+#chk .bx{flex:none;width:32px;height:32px;border:3px solid var(--ink);border-radius:3px;background:#fff;display:flex;align-items:center;justify-content:center}
+#chk.busy .bx{border-color:transparent}
+#chk.busy .bx:after{content:"";width:26px;height:26px;border:4px solid #d9d3c6;border-top-color:var(--pur);border-radius:50%;animation:sp .7s linear infinite}
+#chk .tx{flex:1;font-weight:900;font-size:17px;line-height:1.35}
+#chk .tx small{display:block;font-size:11.5px;font-weight:700;color:var(--sub);margin-top:2px}
+.big{display:block;width:100%;height:54px;border-radius:4px;background:var(--pur);color:#fff;font-weight:900;font-size:18px;box-shadow:0 4px 0 #3a2760;margin-top:12px}
+.big:active{transform:translateY(3px);box-shadow:0 1px 0 #3a2760}
+.sub{display:block;width:100%;height:46px;border-radius:4px;background:#fff;box-shadow:inset 0 0 0 2px var(--line);font-weight:800;font-size:15px;margin-top:10px}
+.sub:active{background:#f4f1ea}
+.sub.x{background:#111;color:#fff;box-shadow:none}.sub.img{background:#2f6fd0;color:#fff;box-shadow:none}.sub.rec{background:var(--ok);color:#fff;box-shadow:none}
+.sub:disabled{opacity:.5}
+.row2{display:flex;gap:8px}.row2 .sub{flex:1}
+.mini{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-top:14px}
+.mini button{font-size:12.5px;color:var(--sub);padding:6px 10px;border-radius:14px;box-shadow:inset 0 0 0 1px var(--line)}
+.mini button.on{background:var(--ink);color:#fff;box-shadow:none}
+.note{font-size:12.5px;color:var(--sub);margin-top:7px;min-height:1em;line-height:1.5}.note.err{color:var(--ng)}.note.ok{color:var(--ok);font-weight:800}
+/* 結果 */
+.verd{position:relative;border:2px solid var(--ink);border-radius:4px;background:#fbfaf6;padding:16px 12px 14px;margin-bottom:12px;overflow:hidden}
+.verd .v1{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--sub);text-align:left}
+.verd .v2{font-size:23px;font-weight:900;margin:12px 0 2px;line-height:1.3}
+.verd .stamp{position:absolute;right:8px;top:8px;border:3px solid var(--ng);color:var(--ng);font-weight:900;font-size:13px;padding:3px 8px;border-radius:4px;transform:rotate(9deg);letter-spacing:.08em;opacity:.9;background:#fff8}
+.res-n{font-size:64px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;margin:6px 0 2px}
+.res-n small{font-size:18px;margin-left:4px}
+.ttl{display:inline-block;background:var(--yel);font-weight:900;font-size:17px;padding:5px 14px;border-radius:3px;margin:8px 0 4px;box-shadow:3px 3px 0 #0002}
+.res-s{font-size:13px;color:var(--sub);line-height:1.6}
+#last{display:flex;gap:10px;align-items:center;text-align:left;border:1px solid var(--line);border-radius:4px;padding:8px;margin:12px 0 4px;background:#fbfaf6}
+#lastPic{flex:none;width:112px;height:112px;position:relative;background-size:cover;border-radius:2px;overflow:hidden}
+#lastPic i{position:absolute;border:2.5px solid #2dffa0;box-shadow:0 0 0 1px #0a5a38}
+#lastTx{font-size:13px;line-height:1.6}#lastTx b{display:block;font-size:15.5px}
+#recBox{margin-top:12px}
+#nm{width:100%;height:46px;border:2px solid var(--line);border-radius:4px;padding:0 12px;font:inherit;font-size:16px;text-align:center;background:#fff;color:var(--ink)}
+.tabs{display:flex;gap:6px;justify-content:center;margin:10px 0 4px}.tabs button{padding:7px 18px;border-radius:16px;font-weight:800;font-size:13.5px;box-shadow:inset 0 0 0 2px var(--line)}.tabs button.on{background:var(--ink);color:#fff;box-shadow:none}
+table.rk{width:100%;border-collapse:collapse;margin-top:8px;font-size:14.5px}table.rk td{padding:8px 4px;border-bottom:1px solid #ece8df;text-align:left}table.rk td.r{width:34px;font-weight:900;color:var(--sub);text-align:center}table.rk td.c{text-align:right;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}table.rk td.c small{color:var(--sub);font-weight:600;margin-left:5px}table.rk tr.me td{background:#f6efd6}
+table.rk tr:nth-child(1) td.r{color:#c9971a}table.rk td.n{word-break:break-all}
+</style>
+<!-- nasubi-track: 結果画面とXへの投稿の回数を記録（ゲームの動きには影響しない） -->
+<script>(function(){try{var G="robot",IDS=["result"];
+function ev(n){try{if(typeof gtag==='function')gtag('event',n,{game:G});}catch(e){}}
+var o=window.open;window.open=function(u){try{if(/intent\/(post|tweet)/.test(String(u)))ev('x_share');}catch(e){}return o.apply(window,arguments);};
+if(!IDS.length)return;
+function vis(e){if(!e||!e.isConnected||e.closest('[hidden]'))return false;var r=e.getBoundingClientRect();if(r.width<1||r.height<1)return false;for(var n=e;n&&n.nodeType===1;n=n.parentElement){var s=getComputedStyle(n);if(s.display==='none'||s.visibility==='hidden'||parseFloat(s.opacity)<0.05)return false;}return true;}
+var was={};setInterval(function(){try{var any=false;for(var i=0;i<IDS.length;i++){if(vis(document.getElementById(IDS[i])))any=true;}if(any&&!was.v)ev('result_view');was.v=any;}catch(e){}},700);
+}catch(e){}})();</script>
+<!-- nasubi-ad: スマホのとき、結果画面とタイトル画面の決めた場所に広告の帯（と、決めた場所だけその下に大きい広告）を出す（遊んでいる最中は出さない・ボタンに重ねない・広告の幅320pxを切らない・画面が出たらすぐ見せるが、最初の1.2秒は押しても反応しない・画面が出るたびに新しい広告を読みこむ（場所ごとに30秒に1回まで）・画面が隠れて2秒たったら広告を外して止める・タイトル画面はタイトル用の広告枠を使う） -->
+<script>(function(){try{var C=[{"a": "#result .card", "v": "#result"}, {"a": "#title div.card", "v": "#title", "t": 1, "b": 1, "m": 20, "x": "", "x2": ""}],BIG=1,M=20,EX="",EX2="",AD='https://nasubi-no-oniwa.github.io/ad/',AD2='https://nasubi-no-oniwa.github.io/ad/big.html',TAD='https://nasubi-no-oniwa.github.io/ad/t.html',TAD2='https://nasubi-no-oniwa.github.io/ad/tbig.html',LOCK=1200,HOLD=2000,MIN=30000;
+if(/[?&]noad=1/.test(location.search))return;
+if(!/iPhone|iPod|Android|Mobile|Windows Phone|BlackBerry/i.test(navigator.userAgent||''))return;
+var S=[];
+function vis(e){if(!e||!e.isConnected||e.closest('[hidden]'))return false;var r=e.getBoundingClientRect();if(r.width<1||r.height<1)return false;for(var n=e;n&&n.nodeType===1;n=n.parentElement){var s=getComputedStyle(n);if(s.display==='none'||s.visibility==='hidden'||parseFloat(s.opacity)<0.05)return false;}return true;}
+function opt(i,k,d){return C[i][k]===undefined?d:C[i][k];}
+function mk(i){var b=document.createElement('div');b.className='nsb-ad';b.style.cssText='display:block;position:static;float:none;box-sizing:content-box;width:320px;min-width:320px;max-width:none;height:50px;margin:'+opt(i,'m',M)+'px calc((100% - 320px) / 2) 0;padding:0;border:0;background:none;box-shadow:none;border-radius:0;transform:none;overflow:hidden;flex:0 0 auto;align-self:center;'+opt(i,'x',EX);return b;}
+function mk2(i){var g=document.createElement('div');g.className='nsb-ad nsb-big';g.style.cssText='display:block;position:static;float:none;box-sizing:content-box;width:300px;min-width:300px;max-width:none;height:250px;margin:20px calc((100% - 300px) / 2) 0;padding:0;border:0;background:none;box-shadow:none;border-radius:0;transform:none;overflow:hidden;flex:0 0 auto;align-self:center;'+opt(i,'x2',EX2);return g;}
+function mkf(u,w,h){var f=document.createElement('iframe');f.title='ad';f.setAttribute('scrolling','no');f.width=w;f.height=h;f.style.cssText='border:0;margin:0;padding:0;width:'+w+'px;height:'+h+'px;display:block;max-width:none;visibility:hidden;pointer-events:none';f.src=u;return f;}
+function place(){for(var i=0;i<C.length;i++){var a=document.querySelector(C[i].a);if(!a)continue;var s=S[i]||(S[i]={b:mk(i),g:opt(i,'b',BIG)?mk2(i):null,on:false,since:0,hid:0,last:0,f:null,f2:null});var b=s.b;
+if(C[i].p==='first'){if(a.firstElementChild!==b)a.insertBefore(b,a.firstChild);}else if(b.parentNode!==a)a.appendChild(b);
+if(s.g&&b.nextSibling!==s.g)a.insertBefore(s.g,b.nextSibling);}}
+function off(s,now){if(s.f){s.f.style.visibility='hidden';s.f.style.pointerEvents='none';}if(s.f2){s.f2.style.visibility='hidden';s.f2.style.pointerEvents='none';}s.on=false;s.since=0;s.hid=now;}
+function kill(s){if(s.f){if(s.f.parentNode)s.f.parentNode.removeChild(s.f);s.f=null;}if(s.f2){if(s.f2.parentNode)s.f2.parentNode.removeChild(s.f2);s.f2=null;}}
+function tick(){try{place();var k=-1,i,s,res=false,now=Date.now();
+for(i=0;i<C.length;i++){s=S[i];if(!C[i].t&&s&&vis(document.querySelector(C[i].v))&&vis(s.b)){k=i;res=true;break;}}
+if(k<0)for(i=0;i<C.length;i++){s=S[i];if(C[i].t&&s&&vis(document.querySelector(C[i].v))&&vis(s.b)){k=i;break;}}
+if(document.hidden)k=-1;
+for(i=0;i<C.length;i++){s=S[i];if(!s)continue;
+if(C[i].t){var d=(res&&vis(document.querySelector(C[i].v)))?'none':'block';if(s.b.style.display!==d){s.b.style.display=d;if(s.g)s.g.style.display=d;}}
+if(i!==k){if(s.on)off(s,now);if(s.f&&now-s.hid>=HOLD&&now-s.last>=MIN)kill(s);}}
+if(k<0)return;
+s=S[k];
+if(!s.on){s.on=true;s.since=now;}
+if(!s.f){var t=!!C[k].t;s.f=mkf(t?TAD:AD,320,50);s.b.appendChild(s.f);if(s.g){s.f2=mkf(t?TAD2:AD2,300,250);s.g.appendChild(s.f2);}s.last=now;}
+if(s.f.parentNode!==s.b)s.b.appendChild(s.f);if(s.f2&&s.f2.parentNode!==s.g)s.g.appendChild(s.f2);
+var pe=(now-s.since<LOCK)?'none':'auto';
+s.f.style.visibility='visible';s.f.style.pointerEvents=pe;if(s.f2){s.f2.style.visibility='visible';s.f2.style.pointerEvents=pe;}
+}catch(_){}}
+function go(){place();try{new MutationObserver(place).observe(document.body,{childList:true,subtree:true});}catch(_){}setInterval(tick,300);}
+if(document.body)go();else document.addEventListener('DOMContentLoaded',go);
+}catch(e){}})();</script>
+<!-- nasubi-next: 結果画面に「次のゲーム」を出す（右にスライドするか押すと、おすすめの画面。中身は nasubi-no-oniwa.github.io/next/next.js で全作品共通） -->
+<script>window.NSB_NEXT={"g": "robot", "r": [{"a": "#result .card", "v": "#result"}], "ad": 1};</script>
+<script src="https://nasubi-no-oniwa.github.io/next/next.js" defer></script>
+<script src="gsap.min.js"></script>
+<script src="pfx.js"></script>
+<script src="data.js"></script>
+</head>
+<body>
+<div id="app">
+  <div id="game" hidden>
+    <div id="hd"><div class="l"><small id="hSel"></small><b id="hKind">　</b><small id="hSub"></small></div><div class="r"><small id="hCntL"></small><span id="cnt">0</span></div></div>
+    <div id="tbar"><i id="tfill"></i></div>
+    <div id="board"><div id="grid"></div><canvas id="fxc" width="180" height="180"></canvas><div id="lvl" hidden></div><div id="msg" hidden></div><div id="load"><div class="spin"></div></div></div>
+    <div id="ft"><div class="ic"><button id="sndBtn2" aria-label="sound">🔊</button></div><span id="tsec">10.0</span><button id="okBtn"></button></div>
+  </div>
+</div>
+
+<div class="panel" id="rank" hidden>
+  <div class="card">
+    <div class="brand"><i></i><span>NASUBI VERIFY</span></div>
+    <div style="font-weight:900;font-size:20px" id="rkT"></div>
+    <div class="tabs" id="rkWhen"><button data-w="d"></button><button data-w="all"></button></div>
+    <div class="res-s" style="font-size:12px" id="rkNote"></div>
+    <div id="rankBox"></div>
+    <button class="sub" id="rkBack"></button>
+  </div>
+</div>
+
+<div class="panel" id="title">
+  <div class="card">
+    <div class="brand"><i></i><span>NASUBI VERIFY</span></div>
+    <h1 id="tH1"></h1>
+    <p class="lead" id="tLead"></p>
+    <button id="chk"><span class="bx"></span><span class="tx"><span id="chkT"></span><small id="chkS"></small></span></button>
+    <button class="sub" id="rkBtn"></button>
+    <div class="mini"><button id="sndBtn"></button></div>
+    <div class="mini" id="langs"></div>
+  </div>
+</div>
+
+<div class="panel" id="result" hidden>
+  <div class="card">
+    <div class="verd"><div class="v1" id="rV1"></div><div class="v2" id="rV2"></div><div class="stamp" id="rStamp"></div>
+      <div class="res-n"><span id="rN">0</span><small id="rUnit"></small></div>
+      <div class="ttl" id="rTtl"></div>
+      <div class="res-s" id="rSub"></div>
+    </div>
+    <div id="last"><div id="lastPic"></div><div id="lastTx"></div></div>
+    <div id="recBox"><input id="nm" maxlength="12" autocomplete="off"><button class="sub rec" id="recBtn"></button><div class="note" id="recNote"></div></div>
+    <div class="row2"><button class="sub img" id="imgBtn"></button><button class="sub x" id="xBtn"></button></div>
+    <button class="big" id="again"></button>
+    <button class="sub" id="rkBtn2"></button>
+  </div>
+</div>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const D = window.RB_DATA;
+const LIMIT = 10000;
+// ---------- ことば ----------
+const TX = {
+  ja: { lang: '日本語', h1: '私はロボットではありません', lead: 'お題の物がある<b>タイルをすべて選んで</b>「確認」。<br>1問<b>10秒</b>。時間内なら選びなおせる。<br>正解するほど<b>マス目は細かく</b>、物は<b>小さく</b>。<br>時間切れで、あなたはロボット。', chk: '私はロボットではありません', chkS: '押すと認証（ゲーム）が始まります', rank: 'ランキング', sel: '次の物があるタイルをすべて選択', sub: 'なければ「スキップ」', cnt: '正解', ok: '確認', skip: 'スキップ', wrong: 'ちがいます', wrongS: 'もう一度選んでください', tout: '時間切れ', none: '該当するタイルはありませんでした', here: n => `ここに「${n}」がありました`, grid: n => `${n}×${n} になった`, v1: 'VERIFICATION FAILED', v2: 'あなたはロボットです', stamp: 'ロボット認定', unit: '問 正解', sub2: s => `人間でいられた時間 ${s}秒`, lastA: n => `<b>最後の問題：「${n}」</b>緑の枠が正解でした。`, lastN: n => `<b>最後の問題：「${n}」</b>該当なし（スキップ）が正解でした。`, name: '名前（12文字まで）', rec: 'ランキングに記録する', img: '画像にする', x: '𝕏 に投稿', again: 'もう一度 認証する', back: 'もどる', today: '今日', all: '全期間', rkNote: '正解が多い順（同じなら早く終えた人が上）', loading: '読みこみ中…', empty: 'まだ記録がありません', rankErr: 'ランキングを読みこめませんでした', needName: '名前を入れてください', badName: 'その名前は使えません', sending: '記録しています…', recPre: '記録しました：', sendErr: '記録できませんでした。電波のいい所でもう一度押してください', norun: 'この回は通信ができなかったため、記録できません', place: n => n + '位', out: '100位圏外', rankRes: (d, a, best) => `今日 ${d}／全期間 ${a}` + (best ? '（自己ベスト）' : ''), rowS: (k, t) => `${k}問<small>${t}秒</small>`, sndOn: '🔊 音あり', sndOff: '🔇 音なし', post: (k, t) => `「私はロボットではありません」と言い張った結果、${k}問正解のあと「あなたはロボットです」と認定されました。\n称号：${t}\n#私はロボットではありません #ブラウザゲーム`, imgH: '認証結果', imgF: 'nasubi-no-oniwa.github.io/robot',
+    titles: ['ただのロボット', 'お掃除ロボット未満', '旧型ロボット', 'ファミレスの配膳ロボット', 'ほぼ信号機', '人間のふりをした何か', '人間（仮）', 'たぶん人間', '目のいい人間', '鷹の目を持つ人間', '人間国宝級の目', '逆にロボット'] },
+  en: { lang: 'English', h1: "I'm not a robot", lead: 'Select <b>every tile</b> that shows the object, then hit Verify.<br><b>10 seconds</b> per question. Wrong? Fix it before time runs out.<br>The more you get right, the <b>finer the grid</b> and the <b>smaller the object</b>.<br>Run out of time and you are a robot.', chk: "I'm not a robot", chkS: 'Tap to start the verification (game)', rank: 'Ranking', sel: 'Select all tiles with', sub: 'If there are none, tap Skip', cnt: 'CORRECT', ok: 'VERIFY', skip: 'SKIP', wrong: 'Try again', wrongS: 'Check your tiles', tout: "Time's up", none: 'There were no matching tiles', here: n => `The ${n} was here`, grid: n => `Now ${n}×${n}`, v1: 'VERIFICATION FAILED', v2: 'You are a robot', stamp: 'ROBOT', unit: 'correct', sub2: s => `Stayed human for ${s}s`, lastA: n => `<b>Last question: ${n}</b>The green frame was the answer.`, lastN: n => `<b>Last question: ${n}</b>The answer was Skip (none).`, name: 'Name (up to 12)', rec: 'Submit to ranking', img: 'Save image', x: 'Post to 𝕏', again: 'Verify again', back: 'Back', today: 'Today', all: 'All time', rkNote: 'Most correct first (ties: faster finish)', loading: 'Loading…', empty: 'No records yet', rankErr: 'Could not load the ranking', needName: 'Enter a name', badName: "That name can't be used", sending: 'Submitting…', recPre: 'Saved: ', sendErr: 'Could not submit. Try again with a better connection', norun: 'This run had no connection, so it cannot be submitted', place: n => '#' + n, out: 'outside top 100', rankRes: (d, a, best) => `Today ${d} / All time ${a}` + (best ? ' (personal best)' : ''), rowS: (k, t) => `${k}<small>${t}s</small>`, sndOn: '🔊 Sound on', sndOff: '🔇 Sound off', post: (k, t) => `I insisted "I'm not a robot". After ${k} correct answers, I was officially declared a robot.\nTitle: ${t}\n#ImNotARobotGame #browsergame`, imgH: 'VERIFICATION RESULT', imgF: 'nasubi-no-oniwa.github.io/robot',
+    titles: ['Just a robot', 'Worse than a vacuum bot', 'Outdated robot', 'Diner serving robot', 'Basically a traffic light', 'Something pretending to be human', 'Human (provisional)', 'Probably human', 'Sharp-eyed human', 'Hawk-eyed human', 'National-treasure eyes', 'So good it must be a robot'] },
+  zh: { lang: '繁體中文', h1: '我不是機器人', lead: '選出<b>所有</b>拍到題目物體的方格，再按「確認」。<br>每題<b>10秒</b>。選錯了，時間內可以重選。<br>答對越多，<b>格子越細</b>、物體<b>越小</b>。<br>時間到，你就是機器人。', chk: '我不是機器人', chkS: '按下後開始驗證（遊戲）', rank: '排行榜', sel: '請選出所有包含以下物體的方格', sub: '沒有的話請按「略過」', cnt: '答對', ok: '確認', skip: '略過', wrong: '不對喔', wrongS: '請再選一次', tout: '時間到', none: '沒有符合的方格', here: n => `「${n}」在這裡`, grid: n => `變成 ${n}×${n}`, v1: 'VERIFICATION FAILED', v2: '你是機器人', stamp: '機器人認定', unit: '題 答對', sub2: s => `維持人類身分 ${s}秒`, lastA: n => `<b>最後一題：「${n}」</b>綠框是正確答案。`, lastN: n => `<b>最後一題：「${n}」</b>正確答案是「略過」。`, name: '名字（最多12字）', rec: '登錄排行榜', img: '存成圖片', x: '發到 𝕏', again: '再驗證一次', back: '返回', today: '今天', all: '全部', rkNote: '答對多的在前（相同時較快結束者在前）', loading: '讀取中…', empty: '還沒有紀錄', rankErr: '無法讀取排行榜', needName: '請輸入名字', badName: '這個名字不能使用', sending: '登錄中…', recPre: '已登錄：', sendErr: '登錄失敗，請在收訊好的地方再按一次', norun: '這一局沒有連線，無法登錄', place: n => '第' + n + '名', out: '100名以外', rankRes: (d, a, best) => `今天 ${d}／全部 ${a}` + (best ? '（個人最佳）' : ''), rowS: (k, t) => `${k}題<small>${t}秒</small>`, sndOn: '🔊 有聲音', sndOff: '🔇 靜音', post: (k, t) => `我堅持「我不是機器人」，答對${k}題之後，被正式認定為機器人。\n稱號：${t}\n#我不是機器人 #browsergame`, imgH: '驗證結果', imgF: 'nasubi-no-oniwa.github.io/robot',
+    titles: ['普通的機器人', '不如掃地機器人', '舊型機器人', '餐廳送餐機器人', '幾乎是紅綠燈', '假裝成人類的某種東西', '人類（暫定）', '大概是人類', '眼力很好的人類', '擁有鷹眼的人類', '國寶級的眼睛', '反而是機器人'] },
+  ko: { lang: '한국어', h1: '로봇이 아닙니다', lead: '문제의 물건이 찍힌 <b>타일을 모두 고르고</b> 「확인」.<br>한 문제 <b>10초</b>. 틀려도 시간 안에는 다시 고를 수 있어요.<br>맞힐수록 <b>칸은 촘촘해지고</b> 물건은 <b>작아집니다</b>.<br>시간이 다 되면, 당신은 로봇.', chk: '로봇이 아닙니다', chkS: '누르면 인증(게임)이 시작됩니다', rank: '랭킹', sel: '다음이 있는 타일을 모두 선택하세요', sub: "없으면 '건너뛰기'", cnt: '정답', ok: '확인', skip: '건너뛰기', wrong: '틀렸습니다', wrongS: '다시 골라 주세요', tout: '시간 초과', none: '해당하는 타일이 없었습니다', here: n => `여기에 「${n}」`, grid: n => `${n}×${n} 로 변경`, v1: 'VERIFICATION FAILED', v2: '당신은 로봇입니다', stamp: '로봇 인정', unit: '문제 정답', sub2: s => `인간으로 버틴 시간 ${s}초`, lastA: n => `<b>마지막 문제: 「${n}」</b>초록 테두리가 정답이었습니다.`, lastN: n => `<b>마지막 문제: 「${n}」</b>정답은 '건너뛰기'였습니다.`, name: '이름 (12자까지)', rec: '랭킹에 기록하기', img: '이미지로 저장', x: '𝕏 에 올리기', again: '다시 인증하기', back: '돌아가기', today: '오늘', all: '전체', rkNote: '정답이 많은 순 (같으면 빨리 끝낸 사람이 위)', loading: '불러오는 중…', empty: '아직 기록이 없습니다', rankErr: '랭킹을 불러오지 못했습니다', needName: '이름을 입력하세요', badName: '그 이름은 쓸 수 없습니다', sending: '기록 중…', recPre: '기록했습니다: ', sendErr: '기록하지 못했습니다. 신호가 좋은 곳에서 다시 눌러 주세요', norun: '이번 판은 통신이 되지 않아 기록할 수 없습니다', place: n => n + '위', out: '100위 밖', rankRes: (d, a, best) => `오늘 ${d} / 전체 ${a}` + (best ? ' (자기 최고)' : ''), rowS: (k, t) => `${k}문제<small>${t}초</small>`, sndOn: '🔊 소리 켬', sndOff: '🔇 소리 끔', post: (k, t) => `"로봇이 아닙니다"라고 우긴 결과, ${k}문제를 맞힌 뒤 공식적으로 로봇 인정을 받았습니다.\n칭호: ${t}\n#로봇이아닙니다 #browsergame`, imgH: '인증 결과', imgF: 'nasubi-no-oniwa.github.io/robot',
+    titles: ['그냥 로봇', '로봇청소기 미만', '구형 로봇', '식당 서빙 로봇', '거의 신호등', '인간인 척하는 무언가', '인간 (임시)', '아마도 인간', '눈이 좋은 인간', '매의 눈을 가진 인간', '인간문화재급 눈', '오히려 로봇'] },
+};
+const LI = { ja: 1, en: 2, zh: 3, ko: 4 };
+const ls = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } } };
+let L = 'ja', T = TX.ja;
+function pickLang() { const s = ls.get('rb_lang', null); if (TX[s]) return s; const n = (navigator.language || 'ja').toLowerCase(); return n.startsWith('ja') ? 'ja' : n.startsWith('zh') ? 'zh' : n.startsWith('ko') ? 'ko' : 'en'; }
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function pname(p) { const k = D.kinds[p[1]], c = p[2] ? D.colors[p[2] - 1] : null; return (c ? c[LI[L]] : '') + k[LI[L]]; }
+function titleOf(k) { const i = k <= 0 ? 0 : k < 5 ? 1 : k < 10 ? 2 : k < 15 ? 3 : k < 20 ? 4 : k < 25 ? 5 : k < 35 ? 6 : k < 45 ? 7 : k < 55 ? 8 : k < 70 ? 9 : k < 100 ? 10 : 11; return T.titles[i]; }
+function setLang(l) {
+  L = TX[l] ? l : 'ja'; T = TX[L]; ls.set('rb_lang', L); document.documentElement.lang = L === 'zh' ? 'zh-Hant' : L; document.title = T.h1;
+  $('tH1').textContent = T.h1; $('tLead').innerHTML = T.lead; $('chkT').textContent = T.chk; $('chkS').textContent = T.chkS; $('rkBtn').textContent = T.rank; $('rkBtn2').textContent = T.rank;
+  $('hSel').textContent = T.sel; $('hSub').textContent = T.sub; $('hCntL').textContent = T.cnt; $('rkT').textContent = T.rank; $('rkNote').textContent = T.rkNote; $('rkBack').textContent = T.back;
+  $('rkWhen').children[0].textContent = T.today; $('rkWhen').children[1].textContent = T.all; $('nm').placeholder = T.name; $('recBtn').textContent = T.rec; $('imgBtn').textContent = T.img; $('xBtn').textContent = T.x; $('again').textContent = T.again;
+  $('langs').innerHTML = Object.keys(TX).map(k => `<button data-l="${k}" class="${k === L ? 'on' : ''}">${TX[k].lang}</button>`).join(''); $('langs').querySelectorAll('button').forEach(b => b.onclick = () => setLang(b.dataset.l));
+  sndLabel(); btnLabel(); if (S && S.cur) $('hKind').textContent = pname(S.cur); if (LAST) showResult();
+}
+// ---------- 問題の順番（遊び始めた時刻から決まる。ランキングの点検でも同じ計算をする） ----------
+function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const H = (a, b) => (Math.imul(a ^ 0x9e3779b9, 0x85ebca6b) ^ Math.imul(b + 0x7f4a7c15, 0xc2b2ae35)) >>> 0;
+const TN = 'abcdefghi', BASE = { a: 0, b: 5, c: 10, d: 15, e: 20, f: 25, g: 35, h: 45, i: 55 };
+const tierAt = k => k < 5 ? 'a' : k < 10 ? 'b' : k < 15 ? 'c' : k < 20 ? 'd' : k < 25 ? 'e' : k < 35 ? 'f' : k < 45 ? 'g' : k < 55 ? 'h' : 'i';
+function seqOf(seed) { const sd = Math.floor(seed) % 2147483647, ord = {}; for (let i = 0; i < 9; i++) { const a = D.tiers[TN[i]].slice(), r = rng(H(sd, i + 1)); for (let j = a.length - 1; j > 0; j--) { const q = Math.floor(r() * (j + 1)); const t = a[j]; a[j] = a[q]; a[q] = t; } ord[TN[i]] = a; } return k => { const t = tierAt(k), a = ord[t]; return a[(k - BASE[t]) % a.length]; }; }
+function maskOf(p, which) { const s = p[which].split('.'), lo = (parseInt(s[0], 36) ^ H(p[0], which)) >>> 0, hi = (parseInt(s[1], 36) ^ H(p[0], which + 7)) >>> 0, N = p[4], set = new Set(); for (let i = 0; i < N * N; i++) if (i < 32 ? (lo >>> i) & 1 : (hi >>> (i - 32)) & 1) set.add(i); return set; }
+const srcOf = p => 'p/' + String(p[0]).padStart(4, '0') + '.webp';
+const IMG = new Map();
+function pre(p) { if (IMG.has(p[0])) return IMG.get(p[0]); const pr = new Promise(res => { const im = new Image(); im.onload = () => res(true); im.onerror = () => res(false); im.src = srcOf(p); }); IMG.set(p[0], pr); return pr; }
+
+// ---------- ゲーム ----------
+let S = null, LAST = null;
+const grid = $('grid');
+function btnLabel() { const b = $('okBtn'); const skip = !S || !S.sel || S.sel.size === 0; b.textContent = skip ? T.skip : T.ok; b.className = skip ? 'skip' : ''; }
+function buildGrid(p) {
+  const N = p[4]; grid.className = 'n' + N; grid.style.gridTemplateColumns = `repeat(${N},1fr)`; grid.style.gridTemplateRows = `repeat(${N},1fr)`; grid.style.gap = N >= 7 ? '2px' : '3px';
+  let h = ''; for (let i = 0; i < N * N; i++) { const x = i % N, y = Math.floor(i / N); h += `<div class="tl" style="background-image:url(${srcOf(p)});background-size:${N * 100}% ${N * 100}%;background-position:${N > 1 ? x / (N - 1) * 100 : 0}% ${N > 1 ? y / (N - 1) * 100 : 0}%"></div>`; } grid.innerHTML = h;
+}
+async function showProblem() {
+  const p = S.cur = S.seq(S.k); S.sel = new Set(); S.busy = true; S.wrongs = 0; $('load').hidden = false; $('msg').hidden = true; btnLabel();
+  pre(S.seq(S.k + 1)); const ok = await pre(p); if (S.over) return;
+  if (!ok) { IMG.delete(p[0]); await new Promise(r => setTimeout(r, 600)); await pre(p); }
+  $('hKind').textContent = pname(p); buildGrid(p); $('load').hidden = true;
+  if (S.lastN && S.lastN !== p[4]) { const lv = $('lvl'); lv.textContent = T.grid(p[4]); lv.hidden = false; gsap.fromTo(lv, { scale: 0.3, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.35, ease: 'back.out(2.5)' }); gsap.to(lv, { opacity: 0, delay: 1.5, duration: 0.3, onComplete: () => lv.hidden = true }); sfx('level'); }
+  S.lastN = p[4]; gsap.fromTo('.tl', { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.22, stagger: { amount: 0.12, from: 'random' }, clearProps: 'transform,opacity' });
+  S.t1 = performance.now(); S.busy = false; if (!S.t0) S.t0 = S.t1; tick();
+}
+function tick() {
+  cancelAnimationFrame(S.raf); const loop = () => { if (!S || S.over || S.busy) return; const left = LIMIT - (performance.now() - S.t1), f = Math.max(0, left / LIMIT); $('tfill').style.transform = `scaleX(${f})`; const hot = left < 3000; $('tbar').className = hot ? 'hot' : ''; const ts = $('tsec'); ts.textContent = (Math.max(0, left) / 1000).toFixed(1); ts.className = hot ? 'hot' : ''; const sec = Math.ceil(left / 1000); if (hot && sec !== S.beep && sec > 0) { S.beep = sec; sfx('tick'); } if (left <= 0) return timeUp(); S.raf = requestAnimationFrame(loop); }; S.beep = 0; S.raf = requestAnimationFrame(loop);
+}
+function cellAt(e) { const r = grid.getBoundingClientRect(), N = S.cur[4]; const x = Math.floor((e.clientX - r.left) / r.width * N), y = Math.floor((e.clientY - r.top) / r.height * N); return x < 0 || y < 0 || x >= N || y >= N ? -1 : y * N + x; }
+function setCell(i, on) { if (i < 0 || S.sel.has(i) === on) return; on ? S.sel.add(i) : S.sel.delete(i); const el = grid.children[i]; el.classList.toggle('on', on); el.classList.remove('bad'); sfx(on ? 'tap' : 'untap'); btnLabel(); }
+let DRAG = null;
+$('board').addEventListener('pointerdown', e => { if (!S || S.over || S.busy) return; const i = cellAt(e); if (i < 0) return; e.preventDefault(); DRAG = { on: !S.sel.has(i), id: e.pointerId }; try { $('board').setPointerCapture(e.pointerId); } catch (_) { } setCell(i, DRAG.on); });
+$('board').addEventListener('pointermove', e => { if (!DRAG || !S || S.over || S.busy || e.pointerId !== DRAG.id) return; setCell(cellAt(e), DRAG.on); });
+const endDrag = () => { DRAG = null; }; $('board').addEventListener('pointerup', endDrag); $('board').addEventListener('pointercancel', endDrag);
+function judge() { const req = maskOf(S.cur, 5), opt = maskOf(S.cur, 6); for (const i of req) if (!S.sel.has(i)) return false; for (const i of S.sel) if (!req.has(i) && !opt.has(i)) return false; return true; }
+$('okBtn').addEventListener('click', () => {
+  if (!S || S.over || S.busy) return;
+  if (judge()) { S.busy = true; cancelAnimationFrame(S.raf); const now = performance.now(); S.log.push(S.cur[0] + '-' + Math.round((now - S.t0) / 100)); S.k++; S.used += now - S.t1; $('cnt').textContent = S.k; sfx('ok'); gsap.fromTo('#cnt', { scale: 1.5 }, { scale: 1, duration: 0.3, ease: 'back.out(3)' }); fxBurst(); const on = [...grid.children].filter(c => c.classList.contains('on')); gsap.to(on.length ? on : grid.children, { scale: 1.02, filter: 'brightness(1.5)', duration: 0.12, yoyo: true, repeat: 1 }); setTimeout(() => { if (S && !S.over) showProblem(); }, 300); }
+  else { S.wrongs++; S.miss++; sfx('ng'); const g = $('game'); g.classList.remove('shake'); void g.offsetWidth; g.classList.add('shake'); const m = $('msg'); m.innerHTML = esc(T.wrong) + '<small>' + esc(T.wrongS) + '</small>'; m.hidden = false; clearTimeout(S.mt); S.mt = setTimeout(() => m.hidden = true, 850); }
+});
+function timeUp() {
+  S.over = true; cancelAnimationFrame(S.raf); $('tfill').style.transform = 'scaleX(0)'; $('tsec').textContent = '0.0'; sfx('over'); bgm(false);
+  const p = S.cur, req = maskOf(p, 5), none = !!p[3]; [...grid.children].forEach((el, i) => { if (req.has(i)) el.classList.add('ans'); else { if (S.sel.has(i)) el.classList.add('bad'); el.classList.add('dimx'); } el.classList.remove('on'); });
+  const m = $('msg'); m.innerHTML = esc(T.tout) + '<small>' + esc(none ? T.none : T.here(pname(p))) + '</small>'; m.hidden = false; m.style.top = '14%'; fxGlitch();
+  LAST = { k: S.k, miss: S.miss, p, sec: Math.round((performance.now() - S.t0) / 100) / 10, t: Math.min(99999, Math.round((performance.now() - S.t0) / 100)), log: S.log.slice(), run: RUN, sent: false };
+  try { if (typeof gtag === 'function') gtag('event', 'game_end', { game: 'robot', lang: L, n: S.k, miss: S.miss }); } catch (e) { }
+  const go = () => { if (!LAST || LAST.shown) return; LAST.shown = true; $('board').removeEventListener('click', go); showResult(true); }; setTimeout(() => $('board').addEventListener('click', go), 500); setTimeout(go, 2600);
+}
+function showResult(first) {
+  const R = LAST; $('rV1').textContent = T.v1; $('rV2').textContent = T.v2; $('rStamp').textContent = T.stamp; $('rN').textContent = R.k; $('rUnit').textContent = T.unit; $('rTtl').textContent = titleOf(R.k); $('rSub').textContent = T.sub2(R.sec.toFixed(1));
+  const p = R.p, N = p[4], req = maskOf(p, 5), lp = $('lastPic'); lp.style.backgroundImage = `url(${srcOf(p)})`; lp.innerHTML = [...req].map(i => `<i style="left:${(i % N) / N * 100}%;top:${Math.floor(i / N) / N * 100}%;width:${100 / N}%;height:${100 / N}%"></i>`).join(''); $('lastTx').innerHTML = p[3] ? T.lastN(esc(pname(p))) : T.lastA(esc(pname(p)));
+  POST = T.post(R.k, titleOf(R.k));
+  if (first) { $('game').hidden = true; $('result').hidden = false; $('result').scrollTop = 0; $('recBtn').disabled = false; $('recNote').textContent = R.run ? '' : T.norun; $('recNote').className = 'note'; if (!R.run) $('recBtn').disabled = true; gsap.fromTo('#result .card', { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: 'power2.out', clearProps: 'transform' }); gsap.fromTo('#rStamp', { scale: 3, opacity: 0, rotate: -20 }, { scale: 1, opacity: 0.9, rotate: 9, duration: 0.3, delay: 0.35, ease: 'power3.in', onComplete: () => sfx('stamp') }); gsap.fromTo('#rTtl', { scale: 0 }, { scale: 1, duration: 0.4, delay: 0.75, ease: 'back.out(2.2)' }); const best = ls.get('rb_best', 0); if (R.k > best) { ls.set('rb_best', R.k); if (R.k >= 5) setTimeout(fxConfetti, 900); } }
+}
+async function start() {
+  const c = $('chk'); if (c.classList.contains('busy')) return; c.classList.add('busy'); audioInit(); sfx('tap'); LAST = null;
+  let st = null; try { st = await Promise.race([netStart(), new Promise(r => setTimeout(() => r(null), 3500))]); } catch (e) { st = null; }
+  if (st == null) RUN = null; const seed = st != null ? st : Date.now();
+  S = { seq: seqOf(seed), k: 0, miss: 0, used: 0, log: [], sel: new Set(), over: false, busy: true, t0: 0, lastN: 0 };
+  await pre(S.seq(0)); c.classList.remove('busy'); $('cnt').textContent = '0'; $('msg').style.top = '50%'; $('title').hidden = true; $('result').hidden = true; $('game').hidden = false; fit();
+  try { if (typeof gtag === 'function') gtag('event', 'game_start', { game: 'robot' }); } catch (e) { }
+  bgm(true); showProblem();
+}
+$('chk').addEventListener('click', start);
+$('again').addEventListener('click', () => { $('result').hidden = true; $('title').hidden = false; start(); });
+function fit() { const g = $('game'), vh = window.innerHeight, w = Math.min(480, window.innerWidth) - 16; const extra = 96 + 7 + 54 + 7 * 5 + 20; const side = Math.max(220, Math.min(w - 16, vh - extra - 24)); $('board').style.width = side + 'px'; $('board').style.alignSelf = 'center'; g.style.width = Math.min(w, side + 16) + 'px'; g.style.alignSelf = 'center'; }
+window.addEventListener('resize', () => { if (S) fit(); });
+
+// ---------- ドット絵の演出（道具箱の pixelfx） ----------
+const fxc = $('fxc'), fctx = fxc.getContext('2d'); let FXS = [], fxRaf = 0, fxFrame = null, fxImg = null, fxLast = 0;
+function fxAdd(mod, o) { try { if (!window.PFX) return; if (!fxFrame) { fxFrame = PFX.createFrame(180, 180); fxImg = new ImageData(180, 180); } FXS.push(PFX.createFx(mod, o)); if (!fxRaf) { fxLast = performance.now(); fxRaf = requestAnimationFrame(fxLoop); } } catch (e) { } }
+function fxLoop(now) { const dt = Math.min(0.05, (now - fxLast) / 1000); fxLast = now; try { PFX.clearFrame(fxFrame); FXS = FXS.filter(f => { f.update(dt); f.draw(fxFrame, 'back'); f.draw(fxFrame, 'front'); return !f.done() && !f.kill; }); PFX.composite(fxFrame, fxImg.data, null); fctx.putImageData(fxImg, 0, 0); } catch (e) { FXS = []; } if (FXS.length) fxRaf = requestAnimationFrame(fxLoop); else { fxRaf = 0; fctx.clearRect(0, 0, 180, 180); } }
+function fxBurst() { if (!S || !S.sel) return; const N = S.cur[4]; let sx = 0, sy = 0, n = 0; for (const i of S.sel) { sx += i % N + 0.5; sy += Math.floor(i / N) + 0.5; n++; } const x = n ? sx / n / N * 180 : 90, y = n ? sy / n / N * 180 : 90; fxAdd(PFX.fx.burst, { x: Math.round(x), y: Math.round(Math.min(170, y + 14)), seed: S.k }); }
+function fxGlitch() { const tl = gsap.timeline(); for (let i = 0; i < 7; i++) tl.to('#grid', { x: (i % 2 ? -1 : 1) * (9 - i), skewX: (i % 2 ? 3 : -3) * (1 - i / 7), filter: `hue-rotate(${i % 2 ? 120 : -60}deg) contrast(1.6) saturate(${i % 2 ? 2.2 : 0.3})`, duration: 0.05 }); tl.to('#grid', { x: 0, skewX: 0, filter: 'none', duration: 0.08, clearProps: 'transform,filter' }); }
+function fxConfetti() { const c = document.createElement('canvas'); c.width = 200; c.height = 140; c.style.cssText = 'position:fixed;left:50%;top:8%;width:min(100vw,480px);transform:translateX(-50%);image-rendering:pixelated;pointer-events:none;z-index:40'; document.body.appendChild(c); try { const fr = PFX.createFrame(200, 140), im = new ImageData(200, 140), f = PFX.createFx(PFX.fx.confetti, { x: 100, y: 126 }), cx = c.getContext('2d'); let last = performance.now(); const lp = now => { const dt = Math.min(0.05, (now - last) / 1000); last = now; f.update(dt); PFX.clearFrame(fr); f.draw(fr, 'back'); f.draw(fr, 'front'); PFX.composite(fr, im.data, null); cx.putImageData(im, 0, 0); if (!f.done() && c.isConnected && !$('result').hidden) requestAnimationFrame(lp); else c.remove(); }; requestAnimationFrame(lp); sfx('best'); } catch (e) { c.remove(); } }
+
+// ---------- 音（最初に押したときに用意する。端末がマナーモードなら鳴らない） ----------
+let AC = null, MG = null, MUTE = !!ls.get('rb_mute', 0), BG = null;
+function audioInit() { if (AC) { if (AC.state === 'suspended') AC.resume(); return; } try { AC = new (window.AudioContext || window.webkitAudioContext)(); MG = AC.createGain(); MG.gain.value = MUTE ? 0 : 1; MG.connect(AC.destination); } catch (e) { AC = null; } }
+function tone(f, d, type = 'sine', v = 0.2, when = 0, f2) { if (!AC) return; const t = AC.currentTime + when, o = AC.createOscillator(), g = AC.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + d); o.connect(g); g.connect(MG); o.start(t); o.stop(t + d + 0.02); }
+function sfx(n) { if (!AC) return; if (n === 'tap') tone(660, 0.07, 'triangle', 0.16); else if (n === 'untap') tone(440, 0.06, 'triangle', 0.1); else if (n === 'ok') { tone(784, 0.1, 'triangle', 0.2); tone(1175, 0.16, 'triangle', 0.2, 0.08); } else if (n === 'ng') { tone(196, 0.16, 'sawtooth', 0.12); tone(185, 0.2, 'sawtooth', 0.1, 0.05); } else if (n === 'tick') tone(1320, 0.05, 'square', 0.07); else if (n === 'level') { tone(523, 0.08, 'square', 0.08); tone(659, 0.08, 'square', 0.08, 0.07); tone(784, 0.14, 'square', 0.08, 0.14); } else if (n === 'over') { tone(440, 0.5, 'sawtooth', 0.16, 0, 70); tone(110, 0.5, 'square', 0.08, 0.1, 55); } else if (n === 'stamp') tone(120, 0.12, 'square', 0.2, 0, 60); else if (n === 'best') { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.16, 'triangle', 0.16, i * 0.09)); } }
+// BGM：待合室っぽい、のんきな曲（電子音だけで鳴らす）
+const CH = [[261.6, 329.6, 392, 493.9], [220, 261.6, 329.6, 392], [174.6, 220, 261.6, 329.6], [196, 246.9, 293.7, 349.2]], MEL = [659.3, 0, 587.3, 523.3, 0, 493.9, 523.3, 0, 440, 0, 523.3, 392, 0, 440, 493.9, 0];
+function bgm(on) { if (BG) { clearInterval(BG.iv); BG = null; } if (!on || !AC) return; const beat = 0.3; BG = { step: 0, next: AC.currentTime + 0.1 }; const sch = () => { if (!AC || !BG) return; while (BG.next < AC.currentTime + 0.25) { const s = BG.step, t = BG.next - AC.currentTime, c = CH[Math.floor(s / 8) % 4]; if (s % 8 === 0) tone(c[0] / 2, beat * 3.4, 'sine', 0.085, t); if (s % 2 === 1) { tone(c[1], beat * 0.9, 'sine', 0.03, t); tone(c[2], beat * 0.9, 'sine', 0.03, t); tone(c[3], beat * 0.9, 'sine', 0.025, t); } const m = MEL[s % 16]; if (m && Math.floor(s / 16) % 2 === 1) tone(m, beat * 1.1, 'triangle', 0.045, t); if (s % 4 === 2) tone(5200, 0.03, 'square', 0.008, t); BG.next += beat; BG.step++; } }; BG.iv = setInterval(sch, 80); sch(); }
+function sndLabel() { $('sndBtn').textContent = MUTE ? T.sndOff : T.sndOn; $('sndBtn2').textContent = MUTE ? '🔇' : '🔊'; }
+const toggleSnd = () => { MUTE = !MUTE; ls.set('rb_mute', MUTE ? 1 : 0); audioInit(); if (MG) MG.gain.value = MUTE ? 0 : 1; sndLabel(); }; $('sndBtn').onclick = toggleSnd; $('sndBtn2').onclick = toggleSnd;
+document.addEventListener('visibilitychange', () => { if (AC) { if (document.hidden) AC.suspend(); else if (S && !S.over) AC.resume(); } });
+
+// ---------- Xに投稿（自分の紹介ツイートを引用する。引用するツイートは一覧ページ quote/ で切りかえ） ----------
+let POST = '', QUOTE = {};
+const SHARE_URL = 'https://nasubi-no-oniwa.github.io/robot/';
+fetch('https://ft-red-default-rtdb.asia-southeast1.firebasedatabase.app/xquote/g/robot.json').then(r => r.json()).then(d => { if (d && typeof d === 'object') QUOTE = d; }).catch(() => { });
+function quoteURL() { const u = (L === 'ja' ? QUOTE.ja : QUOTE.en) || ''; return /^https:\/\/x\.com\/[A-Za-z0-9_]{1,15}\/status\/\d{5,25}$/.test(u) ? u : ''; }
+$('xBtn').addEventListener('click', () => { const q = quoteURL(); window.open('https://x.com/intent/post?text=' + encodeURIComponent(q ? POST + '\n' + SHARE_URL : POST) + '&url=' + encodeURIComponent(q || SHARE_URL), '_blank'); });
+// 画像にする
+$('imgBtn').addEventListener('click', async () => {
+  const R = LAST; if (!R) return; const W = 1080, Hh = 1350, c = document.createElement('canvas'); c.width = W; c.height = Hh; const x = c.getContext('2d'); const F = (px, wt = 900) => `${wt} ${px}px -apple-system,"Hiragino Sans","Noto Sans JP","Yu Gothic UI",sans-serif`;
+  x.fillStyle = '#e9e5dc'; x.fillRect(0, 0, W, Hh); x.fillStyle = '#d8d2c4'; for (let yy = 14; yy < Hh; yy += 28) for (let xx = 14; xx < W; xx += 28) x.fillRect(xx, yy, 3, 3);
+  x.fillStyle = '#fff'; x.fillRect(50, 50, W - 100, Hh - 100); x.strokeStyle = '#221a2e'; x.lineWidth = 5; x.strokeRect(50, 50, W - 100, Hh - 100);
+  x.fillStyle = '#553a86'; x.fillRect(50, 50, W - 100, 150); x.fillStyle = '#fff'; x.textAlign = 'left'; x.textBaseline = 'middle'; x.font = F(54); x.fillText(T.h1, 92, 128, W - 190);
+  x.fillStyle = '#7d7689'; x.font = '700 30px ui-monospace,Menlo,monospace'; x.fillText('VERIFICATION FAILED', 92, 258); x.fillStyle = '#221a2e'; x.font = F(70); x.fillText(T.v2, 92, 338, 620);
+  x.textAlign = 'right'; x.font = F(170); x.fillText(String(R.k), W - 215, 312); x.font = F(34); x.textAlign = 'left'; x.fillText(T.unit, W - 205, 350, 120);
+  x.font = F(46); const tt = titleOf(R.k), tw = Math.min(W - 190, x.measureText(tt).width + 56); x.fillStyle = '#f2c230'; x.fillRect(92, 400, tw, 78); x.fillStyle = '#221a2e'; x.fillText(tt, 120, 441, tw - 56);
+  const im = new Image(); const okI = await new Promise(r => { im.onload = () => r(true); im.onerror = () => r(false); im.src = srcOf(R.p); }); const sz = 700, ix = (W - sz) / 2, iy = 520;
+  if (okI) x.drawImage(im, ix, iy, sz, sz); const N = R.p[4], cs = sz / N; x.strokeStyle = '#ffffffcc'; x.lineWidth = 3; for (let i = 1; i < N; i++) { x.beginPath(); x.moveTo(ix + i * cs, iy); x.lineTo(ix + i * cs, iy + sz); x.moveTo(ix, iy + i * cs); x.lineTo(ix + sz, iy + i * cs); x.stroke(); }
+  x.strokeStyle = '#2dffa0'; x.lineWidth = 9; for (const i of maskOf(R.p, 5)) x.strokeRect(ix + (i % N) * cs + 5, iy + Math.floor(i / N) * cs + 5, cs - 10, cs - 10);
+  x.fillStyle = '#221a2e'; x.textAlign = 'center'; x.font = F(34, 800); x.fillText((R.p[3] ? T.none : T.here(pname(R.p))), W / 2, 1252, W - 180); x.fillStyle = '#7d7689'; x.font = '700 26px ui-monospace,Menlo,monospace'; x.fillText(T.imgF, W / 2, 1286 + 4);
+  x.save(); x.translate(W - 190, 250); x.rotate(0.16); x.strokeStyle = '#d8362f'; x.fillStyle = '#d8362f'; x.lineWidth = 7; x.font = F(36); const sw = x.measureText(T.stamp).width + 40; x.strokeRect(-sw / 2 - 40, -150, sw, 64); x.textAlign = 'center'; x.fillText(T.stamp, -40, -116); x.restore();
+  c.toBlob(async b => { if (!b) return; const f = new File([b], 'robot.png', { type: 'image/png' }); try { if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], text: POST + '\n' + SHARE_URL }); return; } } catch (e) { if (e && e.name === 'AbortError') return; } const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'robot.png'; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000); }, 'image/png');
+});
+
+// ---------- ランキング（ft-blue の robot） ----------
+const FB = { key: 'AIzaSyB2iLUuAyxSJ45RewGrbyLg0sYLsC7njIo', db: 'https://ft-blue-default-rtdb.asia-southeast1.firebasedatabase.app' };
+const NG_WORDS = ['ちんこ','ちんぽ','まんこ','せっくす','セックス','きんたま','レイプ','死ね','しね','殺す','ころす','ガイジ','キチガイ','きちがい','ニガー','チョン','支那','fuck','shit','bitch','cunt','dick','pussy','nigger','nigga','faggot','retard','whore','slut','rape','porn','nazi','hitler'];
+const badName = s => { const n = s.normalize('NFKC').toLowerCase().replace(/[\s・._\-ー〜~!！?？*＊]/g, ''); return NG_WORDS.some(w => n.includes(w.normalize('NFKC').toLowerCase())); };
+async function fx(url, opt) { let err; for (let i = 0; i < 3; i++) { try { return await fetch(url, opt); } catch (e) { err = e; await new Promise(r => setTimeout(r, 500 * (i + 1))); } } throw err; }
+let AUTH = null;
+async function auth() {
+  let a = AUTH || ls.get('rb_auth', null); if (a && a.exp > Date.now() + 60000) return AUTH = a;
+  if (a && a.refresh) { try { const r = await fx('https://securetoken.googleapis.com/v1/token?key=' + FB.key, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'grant_type=refresh_token&refresh_token=' + encodeURIComponent(a.refresh) }); if (r.ok) { const j = await r.json(); a = { uid: j.user_id, token: j.id_token, refresh: j.refresh_token, exp: Date.now() + (+j.expires_in) * 1000 }; ls.set('rb_auth', a); return AUTH = a; } } catch (_) { } }
+  const r = await fx('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=' + FB.key, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ returnSecureToken: true }) });
+  if (!r.ok) throw new Error('auth'); const j = await r.json(); a = { uid: j.localId, token: j.idToken, refresh: j.refreshToken, exp: Date.now() + (+j.expiresIn) * 1000 }; ls.set('rb_auth', a); return AUTH = a;
+}
+const DB = p => FB.db + '/robot/' + p + '.json';
+const QA = a => '?auth=' + encodeURIComponent(a.token);
+const PUT = (url, body) => fx(url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+const TS = { '.sv': 'timestamp' };
+const dayKey = ms => Math.floor((ms + 32400000) / 86400000);
+let RUN = null;
+async function netStart() { RUN = null; const a = await auth(); const r = await PUT(DB('run/' + a.uid) + QA(a), { st: TS }); if (!r.ok) throw new Error('run'); const j = await r.json(); RUN = { st: j.st }; return j.st; }
+async function submit(nm) {
+  const R = LAST; if (!R || !R.run) throw new Error('norun');
+  const a = await auth(), k = R.k, t = R.t, sk = k * 100000 + 99999 - t;
+  const rec = { n: nm, k, t, sk, st: R.run.st, v: 1, at: TS, lg: R.log.join('.') };
+  const dk = dayKey(Date.now()), recD = { ...rec, dk, ds: dk * 100000000 + sk };
+  const get = p => fx(DB(p)).then(x => x.ok ? x.json() : null).catch(() => null);
+  const [old, oldD] = await Promise.all([get('b/all/' + a.uid), get('b/d/' + a.uid)]);
+  const okA = !old || sk > old.sk, okD = !oldD || oldD.dk !== dk || sk > oldD.sk;
+  if (okD) { const r = await PUT(DB('b/d/' + a.uid) + QA(a), recD); if (!r.ok) throw new Error('d'); }
+  if (okA) { const r = await PUT(DB('b/all/' + a.uid) + QA(a), rec); if (!r.ok) throw new Error('all'); }
+  const [rd, ra] = await Promise.all([board('d'), board('all')]);
+  const f = rows => { const x = rows.find(r => r.id === a.uid); return x ? T.place(x.rk) : T.out; };
+  return T.rankRes(f(rd), f(ra), okA);
+}
+// 記録がありえるか：問題の順番は遊び始めた時刻で決まるので、答えた問題の番号がその順番どおりか・時刻が順にならんでいるか・1問0.4秒より速くないかを見る
+function realRec(x) {
+  if (!(x.k >= 0 && x.k <= 400) || typeof x.lg !== 'string') return false;
+  const a = x.lg ? x.lg.split('.') : []; if (a.length !== x.k) return false; const sq = seqOf(x.st); let prev = -4;
+  for (let i = 0; i < a.length; i++) { const m = /^(\d+)-(\d+)$/.exec(a[i]); if (!m) return false; if (+m[1] !== sq(i)[0]) return false; const t = +m[2]; if (t - prev < 4 || t > x.t + 1) return false; prev = t; }
+  return true;
+}
+async function board(when) {
+  const dk = dayKey(Date.now());
+  const q = when === 'd' ? '?orderBy="ds"&startAt=' + dk * 100000000 + '&endAt=' + (dk * 100000000 + 99999999) + '&limitToLast=100' : '?orderBy="sk"&limitToLast=100';
+  const r = await fx(DB('b/' + when) + q); if (!r.ok) throw new Error('board');
+  const o = await r.json() || {};
+  const rows = Object.keys(o).map(id => ({ id, ...o[id] })).filter(x => typeof x.sk === 'number' && x.sk === x.k * 100000 + 99999 - x.t && realRec(x));
+  rows.sort((a, b) => b.sk - a.sk || a.at - b.at);
+  let rk = 0, prev = null; rows.forEach((x, i) => { if (x.sk !== prev) { rk = i + 1; prev = x.sk; } x.rk = rk; });
+  return rows;
+}
+let RKS = { when: 'd', from: 'title' };
+async function openRank(when, from) {
+  const my = RKS = { when, from: from || RKS.from };
+  $('title').hidden = true; $('result').hidden = true; $('rank').hidden = false;
+  $('rkWhen').querySelectorAll('button').forEach(b => { b.className = b.dataset.w === when ? 'on' : ''; b.onclick = () => openRank(b.dataset.w); });
+  const box = $('rankBox'); box.innerHTML = '<p class="note">' + T.loading + '</p>';
+  try {
+    const rows = await board(when); if (RKS !== my) return;
+    const me = (ls.get('rb_auth', null) || {}).uid;
+    box.innerHTML = rows.length ? '<table class="rk">' + rows.map(r => `<tr${r.id === me ? ' class="me"' : ''}><td class="r">${r.rk}</td><td class="n">${esc(String(r.n))}</td><td class="c">${T.rowS(r.k, (r.t / 10).toFixed(1))}</td></tr>`).join('') + '</table>' : '<p class="note">' + T.empty + '</p>';
+  } catch (e) { if (RKS === my) box.innerHTML = '<p class="note err">' + T.rankErr + '</p>'; }
+}
+$('rkBtn').onclick = () => openRank('d', 'title');
+$('rkBtn2').onclick = () => openRank('d', 'result');
+$('rkBack').onclick = () => { $('rank').hidden = true; if (RKS.from === 'result' && LAST) $('result').hidden = false; else $('title').hidden = false; };
+$('nm').value = ls.get('rb_name', '');
+$('recBtn').onclick = async () => {
+  const nm = $('nm').value.trim(), note = $('recNote'); note.className = 'note';
+  if (!nm) { note.textContent = T.needName; note.className = 'note err'; return; }
+  if (badName(nm)) { note.textContent = T.badName; note.className = 'note err'; return; }
+  ls.set('rb_name', nm); $('recBtn').disabled = true; note.textContent = T.sending;
+  try { note.textContent = T.recPre + await submit(nm); note.className = 'note ok'; }
+  catch (e) { note.textContent = e.message === 'norun' ? T.norun : T.sendErr; note.className = 'note err'; if (e.message !== 'norun') $('recBtn').disabled = false; }
+};
+setLang(pickLang());
+if (/[?&]dev=1/.test(location.search)) window.__RB = { get S() { return S; }, get LAST() { return LAST; }, maskOf, judge, seqOf, realRec, pname, board, submit };
+</script>
+</body>
+</html>
