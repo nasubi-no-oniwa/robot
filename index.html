@@ -281,13 +281,13 @@ const endDrag = () => { DRAG = null; }; $('board').addEventListener('pointerup',
 function judge() { const req = maskOf(S.cur, 5), opt = maskOf(S.cur, 6); for (const i of req) if (!S.sel.has(i)) return false; for (const i of S.sel) if (!req.has(i) && !opt.has(i)) return false; return true; }
 $('okBtn').addEventListener('click', () => {
   if (!S || S.over || S.busy) return;
-  if (judge()) { S.busy = true; cancelAnimationFrame(S.raf); const now = performance.now(); S.log.push(S.cur[0] + '-' + Math.round((now - S.t0) / 100)); S.k++; S.used += now - S.t1; $('cnt').textContent = S.k; sfx('ok'); gsap.fromTo('#cnt', { scale: 1.5 }, { scale: 1, duration: 0.3, ease: 'back.out(3)' }); fxBurst(); const on = [...grid.children].filter(c => c.classList.contains('on')); gsap.to(on.length ? on : grid.children, { scale: 1.02, filter: 'brightness(1.5)', duration: 0.12, yoyo: true, repeat: 1 }); setTimeout(() => { if (S && !S.over) showProblem(); }, 300); }
+  if (judge()) { S.busy = true; cancelAnimationFrame(S.raf); const now = performance.now(); S.log.push(S.cur[0] + '-' + Math.round((now - S.t0) / 100)); S.k++; S.used += now - S.t1; $('cnt').textContent = S.k; sfx('ok'); gsap.fromTo('#cnt', { scale: 1.5 }, { scale: 1, duration: 0.3, ease: 'back.out(3)' }); fxBurst(); const on = [...grid.children].filter(c => c.classList.contains('on')); gsap.fromTo(on.length ? on : grid.children, { filter: 'brightness(1)' }, { filter: 'brightness(1.5)', duration: 0.12, yoyo: true, repeat: 1 }); setTimeout(() => { if (S && !S.over) showProblem(); }, 300); }
   else { S.wrongs++; S.miss++; sfx('ng'); const g = $('game'); g.classList.remove('shake'); void g.offsetWidth; g.classList.add('shake'); const m = $('msg'); m.innerHTML = esc(T.wrong) + '<small>' + esc(T.wrongS) + '</small>'; m.hidden = false; clearTimeout(S.mt); S.mt = setTimeout(() => m.hidden = true, 850); }
 });
 function timeUp() {
   S.over = true; cancelAnimationFrame(S.raf); $('tfill').style.transform = 'scaleX(0)'; $('tsec').textContent = '0.0'; sfx('over'); bgm(false);
   const p = S.cur, req = maskOf(p, 5), none = !!p[3]; [...grid.children].forEach((el, i) => { if (req.has(i)) el.classList.add('ans'); else { if (S.sel.has(i)) el.classList.add('bad'); el.classList.add('dimx'); } el.classList.remove('on'); });
-  const m = $('msg'); m.innerHTML = esc(T.tout) + '<small>' + esc(none ? T.none : T.here(pname(p))) + '</small>'; m.hidden = false; m.style.top = '14%'; fxGlitch();
+  const m = $('msg'); m.innerHTML = esc(T.tout) + '<small>' + esc(none ? T.none : T.here(pname(p))) + '</small>'; m.hidden = false; { let sy = 0; for (const i of req) sy += Math.floor(i / p[4]) + 0.5; m.style.top = req.size && sy / req.size / p[4] < 0.5 ? '80%' : '17%'; } fxGlitch();
   LAST = { k: S.k, miss: S.miss, p, sec: Math.round((performance.now() - S.t0) / 100) / 10, t: Math.min(99999, Math.round((performance.now() - S.t0) / 100)), log: S.log.slice(), run: RUN, sent: false };
   try { if (typeof gtag === 'function') gtag('event', 'game_end', { game: 'robot', lang: L, n: S.k, miss: S.miss }); } catch (e) { }
   const go = () => { if (!LAST || LAST.shown) return; LAST.shown = true; $('board').removeEventListener('click', go); showResult(true); }; setTimeout(() => $('board').addEventListener('click', go), 500); setTimeout(go, 2600);
@@ -317,7 +317,7 @@ const fxc = $('fxc'), fctx = fxc.getContext('2d'); let FXS = [], fxRaf = 0, fxFr
 function fxAdd(mod, o) { try { if (!window.PFX) return; if (!fxFrame) { fxFrame = PFX.createFrame(180, 180); fxImg = new ImageData(180, 180); } FXS.push(PFX.createFx(mod, o)); if (!fxRaf) { fxLast = performance.now(); fxRaf = requestAnimationFrame(fxLoop); } } catch (e) { } }
 function fxLoop(now) { const dt = Math.min(0.05, (now - fxLast) / 1000); fxLast = now; try { PFX.clearFrame(fxFrame); FXS = FXS.filter(f => { f.update(dt); f.draw(fxFrame, 'back'); f.draw(fxFrame, 'front'); return !f.done() && !f.kill; }); PFX.composite(fxFrame, fxImg.data, null); fctx.putImageData(fxImg, 0, 0); } catch (e) { FXS = []; } if (FXS.length) fxRaf = requestAnimationFrame(fxLoop); else { fxRaf = 0; fctx.clearRect(0, 0, 180, 180); } }
 function fxBurst() { if (!S || !S.sel) return; const N = S.cur[4]; let sx = 0, sy = 0, n = 0; for (const i of S.sel) { sx += i % N + 0.5; sy += Math.floor(i / N) + 0.5; n++; } const x = n ? sx / n / N * 180 : 90, y = n ? sy / n / N * 180 : 90; fxAdd(PFX.fx.burst, { x: Math.round(x), y: Math.round(Math.min(170, y + 14)), seed: S.k }); }
-function fxGlitch() { const tl = gsap.timeline(); for (let i = 0; i < 7; i++) tl.to('#grid', { x: (i % 2 ? -1 : 1) * (9 - i), skewX: (i % 2 ? 3 : -3) * (1 - i / 7), filter: `hue-rotate(${i % 2 ? 120 : -60}deg) contrast(1.6) saturate(${i % 2 ? 2.2 : 0.3})`, duration: 0.05 }); tl.to('#grid', { x: 0, skewX: 0, filter: 'none', duration: 0.08, clearProps: 'transform,filter' }); }
+function fxGlitch() { const tl = gsap.timeline(); for (let i = 0; i < 7; i++) tl.to('#grid', { x: (i % 2 ? -1 : 1) * (9 - i), skewX: (i % 2 ? 3 : -3) * (1 - i / 7), filter: `hue-rotate(${i % 2 ? 120 : -60}deg) contrast(1.6) saturate(${i % 2 ? 2.2 : 0.3})`, duration: 0.05 }); tl.to('#grid', { x: 0, skewX: 0, filter: 'hue-rotate(0deg) contrast(1) saturate(1)', duration: 0.08, clearProps: 'transform,filter' }); }
 function fxConfetti() { const c = document.createElement('canvas'); c.width = 200; c.height = 140; c.style.cssText = 'position:fixed;left:50%;top:8%;width:min(100vw,480px);transform:translateX(-50%);image-rendering:pixelated;pointer-events:none;z-index:40'; document.body.appendChild(c); try { const fr = PFX.createFrame(200, 140), im = new ImageData(200, 140), f = PFX.createFx(PFX.fx.confetti, { x: 100, y: 126 }), cx = c.getContext('2d'); let last = performance.now(); const lp = now => { const dt = Math.min(0.05, (now - last) / 1000); last = now; f.update(dt); PFX.clearFrame(fr); f.draw(fr, 'back'); f.draw(fr, 'front'); PFX.composite(fr, im.data, null); cx.putImageData(im, 0, 0); if (!f.done() && c.isConnected && !$('result').hidden) requestAnimationFrame(lp); else c.remove(); }; requestAnimationFrame(lp); sfx('best'); } catch (e) { c.remove(); } }
 
 // ---------- 音（最初に押したときに用意する。端末がマナーモードなら鳴らない） ----------
@@ -388,11 +388,11 @@ async function submit(nm) {
   const f = rows => { const x = rows.find(r => r.id === a.uid); return x ? T.place(x.rk) : T.out; };
   return T.rankRes(f(rd), f(ra), okA);
 }
-// 記録がありえるか：問題の順番は遊び始めた時刻で決まるので、答えた問題の番号がその順番どおりか・時刻が順にならんでいるか・1問0.4秒より速くないかを見る
+// 記録がありえるか：問題の順番は遊び始めた時刻で決まるので、答えた問題の番号がその順番どおりか・時刻が順にならんでいるか・1問0.3秒より速くないかを見る
 function realRec(x) {
   if (!(x.k >= 0 && x.k <= 400) || typeof x.lg !== 'string') return false;
   const a = x.lg ? x.lg.split('.') : []; if (a.length !== x.k) return false; const sq = seqOf(x.st); let prev = -4;
-  for (let i = 0; i < a.length; i++) { const m = /^(\d+)-(\d+)$/.exec(a[i]); if (!m) return false; if (+m[1] !== sq(i)[0]) return false; const t = +m[2]; if (t - prev < 4 || t > x.t + 1) return false; prev = t; }
+  for (let i = 0; i < a.length; i++) { const m = /^(\d+)-(\d+)$/.exec(a[i]); if (!m) return false; if (+m[1] !== sq(i)[0]) return false; const t = +m[2]; if (t - prev < 3 || t > x.t + 1) return false; prev = t; }
   return true;
 }
 async function board(when) {
